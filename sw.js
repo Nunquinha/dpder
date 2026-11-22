@@ -1,5 +1,5 @@
-const CACHE='dp-der-shell-v6';
-const FILES=['./','./index.html','./base.css','./style.css?v=2','./access.css?v=1','./access-config.js?v=1','./access.js?v=1','./app.js?v=5-acessos','./calc.js','./install.js?v=1','./manifest.webmanifest','./icon-192.png','./icon-512.png','./logo-der.jpg','./tpu.json','./vendor/xlsx.full.min.js'];
+const CACHE='dp-der-shell-v7';
+const FILES=['./','./index.html','./base.css','./style.css?v=2','./access.css?v=1','./access-config.js?v=1','./access.js?v=2-30dias','./app.js?v=5-acessos','./calc.js','./install.js?v=1','./manifest.webmanifest','./icon-192.png','./icon-512.png','./logo-der.jpg','./tpu.json','./vendor/xlsx.full.min.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('dp-der-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const url=new URL(e.request.url);if(e.request.method!=='GET'||url.origin!==self.location.origin||!url.pathname.startsWith(new URL('./',self.location).pathname))return;e.respondWith(fetch(e.request).then(async response=>{if(response.ok){const cache=await caches.open(CACHE);await cache.put(e.request,response.clone())}return response}).catch(async()=>{const found=await caches.match(e.request);if(found)return found;if(e.request.mode==='navigate')return caches.match('./index.html');return Response.error()}))});
