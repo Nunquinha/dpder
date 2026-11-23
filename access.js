@@ -7,7 +7,7 @@ window.DPAccess=(()=>{
  function storageSet(value){try{value?localStorage.setItem(key,value):localStorage.removeItem(key)}catch{}}
  async function api(path,data={}){
   const endpoint=window.DP_AUTH_ENDPOINT;if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(endpoint||''))throw Error('Acesso por e-mail ainda não configurado.');
-  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({path,data,token}),redirect:'follow',signal:AbortSignal.timeout(30000)});
+  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({path,data,token}),redirect:'follow',signal:AbortSignal.timeout(120000)});
   if(!response.ok)throw Error('Não foi possível conectar ao serviço de acesso.');
   const body=await response.json();if(!body.ok){const err=Error(body.error||'Não foi possível concluir.');err.status=body.status;if(err.status===401){token='';user=null;storageSet('');login(err.message)}throw err}return body.data;
  }
@@ -24,5 +24,5 @@ window.DPAccess=(()=>{
    q('#user-form').onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,button=form.querySelector('button');button.disabled=true;try{await api('users/save',{email:q('#user-email').value.trim(),name:q('#user-name').value.trim(),active:true});await renderUsers()}catch(err){if(q('#users-message'))q('#users-message').textContent=err.message;button.disabled=false}};
    document.querySelectorAll('[data-access-index]').forEach(button=>button.onclick=async()=>{const u=users[+button.dataset.accessIndex];button.disabled=true;try{await api('users/save',{email:u.email,name:u.name,active:!u.active});await renderUsers()}catch(err){if(q('#users-message'))q('#users-message').textContent=err.message;button.disabled=false}});
   }catch(err){if(user?.admin)q('#main').innerHTML=`<p class="notice">${escape(err.message)}</p>`}}
- return {start,renderUsers,allowed:()=>!!user,isAdmin:()=>!!user?.admin,databaseName:()=>user?.admin?'dp-der':'dp-der-user:'+user?.email,login};
+ return {api,start,renderUsers,allowed:()=>!!user,isAdmin:()=>!!user?.admin,databaseName:()=>user?.admin?'dp-der':'dp-der-user:'+user?.email,login};
 })();
