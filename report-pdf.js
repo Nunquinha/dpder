@@ -14,18 +14,18 @@ window.DPReportPDF=(()=>{
   function section(title){ensure(110);y+=10;draw(title,M,y,11,bold);y+=24}
   function table(headers,widths,rows,alignRight=[]){const headerHeight=28;function header(){page.drawRectangle({x:M,y:H-y-headerHeight,width:CW,height:headerHeight,color:green});let x=M;headers.forEach((h,i)=>{draw(h,x+7,y+8,8,bold,white);x+=widths[i]});y+=headerHeight}ensure(60);header();rows.forEach((cells,index)=>{const content=cells.map((v,i)=>wrap(v,widths[i]-14,8.4));const height=Math.max(32,...content.map(a=>a.length*11+16));if(ensure(height)){draw('Continuação',M,y,9,regular,muted);y+=20;header()}if(index%2===0)page.drawRectangle({x:M,y:H-y-height,width:CW,height,color:pale});let x=M;content.forEach((lines,i)=>{lines.forEach((s,j)=>{const dx=alignRight.includes(i)?widths[i]-7-regular.widthOfTextAtSize(s,8.4):7;draw(s,x+dx,y+8+j*11,8.4)});x+=widths[i]});page.drawLine({start:{x:M,y:H-y-height},end:{x:W-M,y:H-y-height},thickness:.5,color:line});y+=height})}
 
-  function field(label,value){paragraph(label+': '+(value||'Não informado'),CW,9,green)}
+  function field(label,value){const prefix=label+': ',offset=bold.widthOfTextAtSize(safe(prefix,bold),9)+3,lines=wrap(value||'Não informado',CW-offset,9);for(let n=0;n<lines.length;n++){ensure(15);if(n===0)draw(prefix,M,y,9,bold);draw(lines[n],M+offset,y,9,regular);y+=14}}
   newPage();
   for(const lineText of wrap('APROPRIAÇÃO DE CUSTOS E RESSARCIMENTO DE DANOS AO PATRIMÔNIO',CW,14,bold)){draw(lineText,M,y,14,bold);y+=19}y+=10;
   if(!record.validated){paragraph('MINUTA PARA CONFERÊNCIA - confira medições, regime da TPU e arredondamento.',CW,8);y+=7}
   field('Processo / ocorrência',record.number);field('B.O.',record.bo);
   field('Rodovia',record.road+' | km '+(record.km||'Não informado')+' | Sentido: '+(record.direction||'Não informado'));
-  field('Data da ocorrência',DPHistory.date(record.date));field('Responsável / interessado',record.responsible);field('Responsável técnico',record.technician);
+  field('Data da ocorrência',DPHistory.date(record.date));field('Responsável pelo Dano',record.responsible);y+=9;draw('IDENTIFICAÇÃO TÉCNICA',M,y,8,bold,muted);y+=17;field('Responsável técnico',record.technician);field('Cargo',record.technicianRole);field('Chefe de Serviço',record.serviceChief);
   section('1. Descrição do dano');paragraph(record.description||'Não informada.',CW,9,green);
   section('2. Apropriação de custos');
   const perItem=record.rounding!=='total';
   table(['CÓDIGO / SERVIÇO','UN.','QUANTIDADE','UNIT. (R$)',perItem?'TOTAL (R$)':'PRODUTO (R$)'],[221,29,69,85,CW-404],record.items.map((i,n)=>[
-   i.code+' - '+i.name+' | TPU: '+(i.reference||'Não informada')+' | '+(i.regime==='D'?'Desonerada':'Não desonerada'),i.unit,String(i.quantity).replace('.',','),DPCalc.amount(DPCalc.cents(i.price)),perItem?DPCalc.amount(DPCalc.cents(calculation.exact[n])):calculation.exact[n].replace('.',',')
+   i.code+' - '+i.name+' | TPU: '+(i.reference||'Não informada')+' | '+(i.regime==='D'?'Desonerada':'Não desonerada'),DPMeasurement.unit(i.unit),String(i.quantity).replace('.',','),DPCalc.amount(DPCalc.cents(i.price)),perItem?DPCalc.amount(DPCalc.cents(calculation.exact[n])):calculation.exact[n].replace('.',',')
   ]),[2,3,4]);
   ensure(63);y+=12;draw('VALOR TOTAL DOS DANOS',M,y,10,bold);const amount='R$ '+DPCalc.amount(calculation.sum);draw(amount,W-M-bold.widthOfTextAtSize(amount,17),y-4,17,bold);y+=30;
   paragraph('Sem BDI ou acréscimos adicionais. Arredondamento decimal, metade para cima. Regra: '+(perItem?'arredondar cada item para centavos e somar.':'somar os produtos exatos e arredondar somente o total.'),CW,8);
@@ -33,8 +33,8 @@ window.DPReportPDF=(()=>{
   record.items.forEach((i,n)=>{
    ensure(85);paragraph((n+1)+'. '+i.code+' - '+i.name,CW,9,green);
    if(i.note)paragraph('Descrição da medição: '+i.note,CW,8);
-   paragraph('Medição: '+(i.formula||String(i.quantity).replace('.',',')+' '+i.unit),CW,9,green);
-   paragraph('Custo: '+String(i.quantity).replace('.',',')+' × R$ '+String(i.price).replace('.',',')+' = R$ '+calculation.exact[n].replace('.',','),CW,9,green);y+=9;
+   paragraph('Medição: '+DPMeasurement.describe(i),CW,9,green);
+   paragraph('Custo: '+DPMeasurement.cost(i,calculation.exact[n]),CW,9,green);y+=9;
   });
   async function embedPhoto(src){
    if(/^data:image\/jpe?g;base64,/.test(src))return doc.embedJpg(src);
@@ -47,9 +47,11 @@ window.DPReportPDF=(()=>{
     const available=H-70-y,scale=Math.min(CW/image.width,available/image.height),iw=image.width*scale,ih=image.height*scale;
     page.drawImage(image,{x:M+(CW-iw)/2,y:H-y-ih,width:iw,height:ih});y+=ih+15;
    }
-  }else{section('4. Relatório fotográfico');paragraph('Nenhuma foto anexada.',CW,9,green)}
+  }
   const pages=doc.getPages();pages.forEach((p,i)=>{p.drawLine({start:{x:M,y:44},end:{x:W-M,y:44},thickness:.6,color:line});p.drawText('DP DER | Danos ao patrimônio',{x:M,y:29,size:7,font:regular,color:muted});const label=(i+1)+' / '+pages.length;p.drawText(label,{x:W-M-regular.widthOfTextAtSize(label,8),y:29,size:8,font:regular,color:muted})});
   return doc.save();
  }
  return {build};
 })();
+
+

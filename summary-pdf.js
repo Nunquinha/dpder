@@ -20,11 +20,12 @@ window.DPSummaryPDF=(()=>{
   ensure(84);page.drawRectangle({x:M,y:H-y-78,width:CW,height:78,color:green});draw('VALOR TOTAL DOS DANOS',M+16,y+13,9,bold,white);draw('R$ '+DPCalc.amount(summary.total),M+16,y+32,24,bold,white);draw(records.length+(records.length===1?' ocorrência':' ocorrências'),M+340,y+18,10,bold,white);draw(summary.itemCount+(summary.itemCount===1?' item de dano':' itens de dano'),M+340,y+39,9,regular,white);y+=92;
   if(summary.pending)paragraph(summary.pending+(summary.pending===1?' ocorrência ainda a conferir.':' ocorrências ainda a conferir.')+' Os valores representam a apuração dos danos, sem comprovação de pagamento.',CW,8);
   section('1. Resumo por rodovia');table(['RODOVIA','OCORRÊNCIAS','VALOR (R$)'],[CW-210,95,115],summary.groups.map(g=>[g.road,String(g.count),DPCalc.amount(g.total)]),[1,2]);
-  section('2. Relação de ocorrências');table(['DATA','RESPONSÁVEL','LOCAL','B.O. / PROCESSO','VALOR (R$)'],[64,128,85,127,CW-404],summary.entries.map(({record:r,total})=>[DPHistory.date(r.date),r.responsible||'Não informado',(r.road||'Não informada')+' - km '+(r.km||'—'),(r.bo?'B.O.: '+r.bo:'B.O.: não informado')+' | Processo: '+(r.number||'—')+(r.validated?'':' | A conferir'),DPCalc.amount(total)]),[4]);
+  section('2. Relação de ocorrências');table(['DATA','RESP. PELO DANO','LOCAL','B.O. / PROCESSO','VALOR (R$)'],[64,128,85,127,CW-404],summary.entries.map(({record:r,total})=>[DPHistory.date(r.date),r.responsible||'Não informado',(r.road||'Não informada')+' - km '+(r.km||'—'),(r.bo?'B.O.: '+r.bo:'B.O.: não informado')+' | Processo: '+(r.number||'—')+(r.validated?'':' | A conferir'),DPCalc.amount(total)]),[4]);
   ensure(53);y+=13;draw('VALOR TOTAL DOS DANOS',M+8,y,10,bold);const amount='R$ '+DPCalc.amount(summary.total);draw(amount,W-M-bold.widthOfTextAtSize(amount,14)-8,y-2,14,bold);y+=29;
   ensure(50);paragraph('Critério: soma dos totais de cada ocorrência selecionada, respeitando a TPU e o arredondamento utilizados no respectivo orçamento.',CW,8);
   const pages=doc.getPages();pages.forEach((p,i)=>{p.drawLine({start:{x:M,y:44},end:{x:W-M,y:44},thickness:.6,color:line});p.drawText('DP DER | Desenvolvido Por Vinicius Vaz Vieira',{x:M,y:29,size:7,font:regular,color:muted});const label=(i+1)+' / '+pages.length;p.drawText(label,{x:W-M-regular.widthOfTextAtSize(label,8),y:29,size:8,font:regular,color:muted})});return doc.save();
  }
  return {build};
 })();
+
 
