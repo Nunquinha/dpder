@@ -1,4 +1,4 @@
-const CACHE='dp-der-shell-v18-central';
+const CACHE='dp-der-shell-v19-install-id';
 const FILES=['./','./index.html','./base.css','./style.css?v=3-historico','./access.css?v=1','./access-config.js?v=1','./access.js?v=3-central','./cloud.js?v=1','./app.js?v=13-central','./calc.js','./measurement.js?v=1','./install.js?v=2','./manifest.webmanifest','./icon-192.png','./icon-512.png','./logo-der.jpg','./tpu.json','./vendor/xlsx.full.min.js','./vendor/pdf-lib.min.js','./summary-pdf.js?v=4-data-orcamento','./history.js?v=6-central','./report-pdf.js?v=6-data-orcamento'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(path=>new Request(path,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('dp-der-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
