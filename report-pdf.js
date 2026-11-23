@@ -20,7 +20,7 @@ window.DPReportPDF=(()=>{
   if(!record.validated){paragraph('MINUTA PARA CONFERÊNCIA - confira medições, regime da TPU e arredondamento.',CW,8);y+=7}
   field('Processo / ocorrência',record.number);field('B.O.',record.bo);
   field('Rodovia',record.road+' | km '+(record.km||'Não informado')+' | Sentido: '+(record.direction||'Não informado'));
-  field('Data da ocorrência',DPHistory.date(record.date));field('Responsável pelo Dano',record.responsible);y+=9;draw('IDENTIFICAÇÃO TÉCNICA',M,y,8,bold,muted);y+=17;field('Responsável técnico',record.technician);field('Cargo',record.technicianRole);field('Chefe de Serviço',record.serviceChief);
+  field('Data da ocorrência',DPHistory.date(record.date));field('Responsável pelo Dano',record.responsible);y+=9;draw('IDENTIFICAÇÃO TÉCNICA',M,y,8,bold,muted);y+=17;const people=personnel(record);field('Elaborado por',people.elaboratedBy);field('Cargo',people.elaboratorRole);y+=5;field('Responsável técnico',people.technician);field('Cargo',people.technicianRole);
   section('1. Descrição do dano');paragraph(record.description||'Não informada.',CW,9,green);
   section('2. Apropriação de custos');
   const perItem=record.rounding!=='total';
