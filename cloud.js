@@ -16,21 +16,20 @@ window.DPCloud=(()=>{
  async function refresh(){
   if(busy)return;busy=true;
   try{
-   await table();
-   const remote=await api('records/list'),local=await request('records','readonly',s=>s.getAll()),byId=new Map(remote.records.map(r=>[r.id,r])),deleted=new Set(remote.deleted);
+   const [,remote,local]=await Promise.all([table(),api('records/list'),request('records','readonly',s=>s.getAll())]);
+   const byId=new Map(remote.records.map(r=>[r.id,r])),deleted=new Set(remote.deleted),cached=new Map(local.map(r=>[r.id,r]));
    for(const r of local){
     if(deleted.has(r.id)){await request('records','readwrite',s=>s.delete(r.id));continue}
     if(!r.cloudVersion||r.pendingSync){
-     try{const result=await api('records/save',{record:r,migrate:!r.cloudVersion});byId.set(r.id,result.record);if(!result.existing){const saved={...r,cloudVersion:result.record.cloudVersion,updatedAt:result.record.updatedAt,updatedBy:result.record.updatedBy};delete saved.pendingSync;await request('records','readwrite',s=>s.put(saved))}}
+     try{const result=await api('records/save',{record:r,migrate:!r.cloudVersion});byId.set(r.id,result.record);if(!result.existing){const saved={...r,cloudVersion:result.record.cloudVersion,updatedAt:result.record.updatedAt,updatedBy:result.record.updatedBy};delete saved.pendingSync;await request('records','readwrite',s=>s.put(saved));cached.set(saved.id,saved)}}
      catch(err){if(err.status===401||err.status===403)throw err;byId.set(r.id,{...r,pendingSync:true,syncError:err.message});}
     }
    }
-   const current=await request('records','readonly',s=>s.getAll()),cached=new Map(current.map(r=>[r.id,r]));
    for(const r of byId.values()){const c=cached.get(r.id);if(!c||(!c.pendingSync&&c.cloudVersion!==r.cloudVersion))await request('records','readwrite',s=>s.put(r))}
    records=[...byId.values()];
   }finally{busy=false}
  }
- async function start(){await serial(refresh);clearInterval(timer);timer=setInterval(()=>{if(DPAccess.allowed()&&!document.hidden)serial(refresh).catch(()=>{})},60000)}
+ async function start(){await serial(async()=>{version=0;const cached=await request('settings','readonly',s=>s.get('tpu'));if(cached?.tables&&Number.isSafeInteger(cached.cloudTpuVersion)&&cached.cloudTpuVersion>0){tpu=cached;version=cached.cloudTpuVersion}await refresh()});clearInterval(timer);timer=setInterval(()=>{if(DPAccess.allowed()&&!document.hidden)serial(refresh).catch(()=>{})},60000)}
  async function save(snapshot){
   if(snapshot.cloudSummary)throw Error('Reabra a ocorrência antes de salvar.');
   const draft={...structuredClone(snapshot),syncWriteId:crypto.randomUUID(),pendingSync:true};await request('records','readwrite',s=>s.put(draft));
