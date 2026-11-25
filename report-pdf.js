@@ -18,7 +18,7 @@ window.DPReportPDF=(()=>{
   newPage();
   for(const lineText of wrap('APROPRIAÇÃO DE CUSTOS E RESSARCIMENTO DE DANOS AO PATRIMÔNIO',CW,14,bold)){draw(lineText,M,y,14,bold);y+=19}y+=10;
   if(!record.validated){paragraph('MINUTA PARA CONFERÊNCIA - confira medições, regime da TPU e arredondamento.',CW,8);y+=7}
-  field('Processo / ocorrência',record.number);field('B.O.',record.bo);
+  field('Processo SEI',record.number);field('Evento',record.event);field('B.O.',record.bo);
   field('Rodovia',record.road+' | km '+(record.km||'Não informado')+' | Sentido: '+(record.direction||'Não informado'));
   field('Data do orçamento',DPHistory.date(record.date));field('Responsável pelo Dano',record.responsible);y+=9;draw('IDENTIFICAÇÃO TÉCNICA',M,y,8,bold,muted);y+=17;const people=personnel(record);field('Apoio técnico',people.elaboratedBy);field('Cargo',people.elaboratorRole);y+=5;field('Responsável técnico',people.technician);field('Cargo',people.technicianRole);
   section('1. Descrição do dano');paragraph(record.description||'Não informada.',CW,9,green);
